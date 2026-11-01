@@ -578,6 +578,12 @@ ol {
   gap: 1rem;
 }
 
+.hero-resume-btn {
+  padding: 1rem 1.85rem;
+  font-size: 0.875rem;
+  background-color: rgba(17, 17, 17, 0.85);
+}
+
 /* ==========================================================================
    2. ABOUT SECTION (#about)
    ========================================================================== */
@@ -717,6 +723,13 @@ ol {
   font-size: 0.875rem;
   color: var(--fg-muted);
   line-height: 1.45;
+}
+
+.about-actions {
+  margin-top: 2rem;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
 }
 
 /* ==========================================================================
