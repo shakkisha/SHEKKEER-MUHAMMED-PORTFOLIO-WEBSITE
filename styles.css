@@ -310,6 +310,12 @@ ol {
   transform: translateX(4px);
 }
 
+.btn:disabled {
+  opacity: 0.65;
+  cursor: wait;
+  pointer-events: none;
+}
+
 /* ==========================================================================
    STICKY HEADER & COLLAPSING MOBILE NAVIGATION
    ========================================================================== */
@@ -1487,6 +1493,11 @@ textarea.form-control {
   font-weight: 600;
 }
 
+.form-status.is-error {
+  border-style: dashed;
+  background-color: rgba(255, 61, 31, 0.18);
+}
+
 .form-status[hidden] {
   display: none !important;
 }
@@ -1655,6 +1666,155 @@ textarea.form-control {
 }
 
 /* ==========================================================================
+   CONFIRMATION POP-UP MODAL (SHARP EDGES, VIEWFINDER ACCENTS)
+   ========================================================================== */
+
+.confirm-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 950;
+  background-color: rgba(0, 0, 0, 0.88);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--gutter);
+}
+
+.confirm-modal[hidden] {
+  display: none !important;
+}
+
+.confirm-modal-card {
+  position: relative;
+  width: 100%;
+  max-width: 520px;
+  background-color: var(--bg-elevated);
+  border: 1px solid var(--border-strong);
+  padding: clamp(1.75rem, 4vw, 2.75rem);
+  animation: confirmModalIn var(--dur-med) var(--ease-out);
+}
+
+.confirm-modal-card::before,
+.confirm-modal-card::after {
+  content: '';
+  position: absolute;
+  width: 22px;
+  height: 22px;
+  border-color: var(--accent);
+  border-style: solid;
+  pointer-events: none;
+}
+
+.confirm-modal-card::before {
+  top: -1px;
+  left: -1px;
+  border-width: 3px 0 0 3px;
+}
+
+.confirm-modal-card::after {
+  bottom: -1px;
+  right: -1px;
+  border-width: 0 3px 3px 0;
+}
+
+@keyframes confirmModalIn {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.confirm-modal-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 1.75rem;
+}
+
+.confirm-modal-eyebrow {
+  margin-bottom: 0;
+}
+
+.confirm-modal-icon {
+  width: 52px;
+  height: 52px;
+  background-color: var(--accent);
+  color: #ffffff;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 1.25rem;
+}
+
+.confirm-modal-title {
+  font-family: var(--font-display);
+  font-weight: 400;
+  font-size: clamp(2.1rem, 4.5vw, 3rem);
+  line-height: 0.96;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+  color: #ffffff;
+  margin: 0 0 0.85rem;
+}
+
+.confirm-modal-desc {
+  margin: 0 0 1.75rem;
+  color: var(--fg-muted);
+  font-size: 1rem;
+  line-height: 1.55;
+}
+
+.confirm-modal-meta {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+  padding: 1.1rem 1.25rem;
+  background-color: #040404;
+  border: 1px solid var(--border);
+  margin-bottom: 1.75rem;
+}
+
+.confirm-meta-item {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  min-width: 0;
+}
+
+.confirm-meta-label {
+  font-size: 0.6875rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.16em;
+  color: var(--accent);
+}
+
+.confirm-meta-val {
+  font-size: 0.9375rem;
+  font-weight: 600;
+  color: #ffffff;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.confirm-modal-actions {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.confirm-done-btn {
+  width: 100%;
+}
+
+/* ==========================================================================
    RESPONSIVE BREAKPOINTS
    ========================================================================== */
 
@@ -1761,7 +1921,8 @@ textarea.form-control {
   }
 
   .form-grid,
-  .socials-grid {
+  .socials-grid,
+  .confirm-modal-meta {
     grid-template-columns: 1fr;
   }
 

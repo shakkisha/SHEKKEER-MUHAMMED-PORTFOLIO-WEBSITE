@@ -511,25 +511,43 @@
   const serviceSelect = document.getElementById('contact-service');
   const nameInput = document.getElementById('contact-name');
   const emailInput = document.getElementById('contact-email');
+  const phoneInput = document.getElementById('contact-phone');
   const messageInput = document.getElementById('contact-message');
   const prefillBanner = document.getElementById('prefill-banner');
   const prefillText = document.getElementById('prefill-text');
   const prefillClear = document.getElementById('prefill-clear');
 
+  const SERVICE_TO_PROJECT_TYPE = {
+    Photography: 'Commercial Photography',
+    Videography: 'Automotive Cinematography',
+    'Social Media Content': 'Digital & AI Content Creation',
+    'Real Estate Visuals': 'Other Collaboration'
+  };
+
   let lastAutoMessage = '';
 
-  function buildServiceStarter(serviceName) {
-    return `Hi Shekkeer, I'd like to book ${serviceName} in Dubai. Here are the project details and dates: `;
+  function buildServiceStarter(label) {
+    return `Hi Shekkeer, I'd like to book ${label} in Dubai. Here are the project details and dates: `;
   }
 
-  function applyServicePrefill(serviceName) {
+  function applyServicePrefill(rawSelection) {
+    const mappedProjectType = SERVICE_TO_PROJECT_TYPE[rawSelection] || rawSelection || '';
+
     if (serviceSelect) {
-      serviceSelect.value = serviceName;
+      serviceSelect.value = mappedProjectType;
+      serviceSelect.setAttribute('aria-invalid', 'false');
+      const errEl = document.getElementById('error-service');
+      if (errEl) errEl.textContent = '';
     }
 
+    const displayLabel = rawSelection || mappedProjectType;
+
     if (prefillBanner && prefillText) {
-      if (serviceName) {
-        prefillText.textContent = `Selected service: ${serviceName}`;
+      if (displayLabel) {
+        prefillText.textContent =
+          rawSelection && rawSelection !== mappedProjectType
+            ? `Selected service: ${rawSelection} (${mappedProjectType})`
+            : `Selected project type: ${displayLabel}`;
         prefillBanner.hidden = false;
       } else {
         prefillBanner.hidden = true;
@@ -537,18 +555,18 @@
     }
 
     if (contactPanel) {
-      contactPanel.classList.toggle('is-prefilled', Boolean(serviceName));
+      contactPanel.classList.toggle('is-prefilled', Boolean(displayLabel));
     }
 
     if (messageInput) {
       const currentVal = messageInput.value.trim();
-      if (!serviceName) {
+      if (!displayLabel) {
         if (messageInput.value === lastAutoMessage) {
           messageInput.value = '';
           lastAutoMessage = '';
         }
       } else if (!currentVal || messageInput.value === lastAutoMessage) {
-        const starter = buildServiceStarter(serviceName);
+        const starter = buildServiceStarter(displayLabel);
         messageInput.value = starter;
         lastAutoMessage = starter;
       }
@@ -588,13 +606,80 @@
   }
 
   /* ------------------------------------------------------------------------
-     6. CONTACT FORM VALIDATION & SUBMISSION
+     6. GOOGLE FORM VALIDATION & SUBMISSION
      ------------------------------------------------------------------------ */
+  const GOOGLE_FORM_ACTION_URL =
+    'https://docs.google.com/forms/u/0/d/e/1FAIpQLScBjBTYOVpy45D_x0O-S8P6qaLRETJlVRzxGnJXM56rMxd0dA/formResponse';
+
   const contactForm = document.getElementById('contact-form');
+  const submitBtn = document.getElementById('contact-submit');
+  const submitLabel = document.getElementById('contact-submit-label');
   const formStatus = document.getElementById('form-status');
   const errorName = document.getElementById('error-name');
   const errorEmail = document.getElementById('error-email');
+  const errorPhone = document.getElementById('error-phone');
+  const errorService = document.getElementById('error-service');
   const errorMessage = document.getElementById('error-message');
+
+  const confirmModal = document.getElementById('confirm-modal');
+  const confirmModalClose = document.getElementById('confirm-modal-close');
+  const confirmModalDone = document.getElementById('confirm-modal-done');
+  const confirmModalDesc = document.getElementById('confirm-modal-desc');
+  const confirmMetaService = document.getElementById('confirm-meta-service');
+  const confirmMetaEmail = document.getElementById('confirm-meta-email');
+
+  function openConfirmModal(name, service, email) {
+    if (!confirmModal) return;
+    if (confirmModalDesc) {
+      confirmModalDesc.textContent = `Thanks, ${name}! Your ${service.toLowerCase()} enquiry has been submitted successfully. Shekkeer will get back to you within 24 hours.`;
+    }
+    if (confirmMetaService) confirmMetaService.textContent = service;
+    if (confirmMetaEmail) confirmMetaEmail.textContent = email;
+
+    confirmModal.hidden = false;
+    confirmModal.removeAttribute('hidden');
+    document.body.classList.add('lock-scroll');
+    if (confirmModalDone) {
+      confirmModalDone.focus();
+    } else if (confirmModalClose) {
+      confirmModalClose.focus();
+    }
+  }
+
+  function closeConfirmModal() {
+    if (!confirmModal || confirmModal.hidden) return;
+    confirmModal.hidden = true;
+    document.body.classList.remove('lock-scroll');
+    if (submitBtn) submitBtn.focus();
+  }
+
+  if (confirmModalClose) confirmModalClose.addEventListener('click', closeConfirmModal);
+  if (confirmModalDone) confirmModalDone.addEventListener('click', closeConfirmModal);
+  if (confirmModal) {
+    confirmModal.addEventListener('click', (e) => {
+      if (e.target === confirmModal) closeConfirmModal();
+    });
+  }
+
+  document.addEventListener('keydown', (e) => {
+    if (!confirmModal || confirmModal.hidden) return;
+    if (e.key === 'Escape') {
+      e.preventDefault();
+      closeConfirmModal();
+    } else if (e.key === 'Tab') {
+      const focusables = [confirmModalClose, confirmModalDone].filter(Boolean);
+      if (!focusables.length) return;
+      const first = focusables[0];
+      const last = focusables[focusables.length - 1];
+      if (e.shiftKey && document.activeElement === first) {
+        e.preventDefault();
+        last.focus();
+      } else if (!e.shiftKey && document.activeElement === last) {
+        e.preventDefault();
+        first.focus();
+      }
+    }
+  });
 
   function setFieldError(inputEl, errorEl, msg) {
     if (!inputEl || !errorEl) return;
@@ -606,30 +691,91 @@
     return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(val);
   }
 
+  const googleFormSink = document.getElementById('google-form-sink');
+
+  function submitViaHiddenIframe(formEl) {
+    return new Promise((resolve, reject) => {
+      let settled = false;
+      const done = () => {
+        if (settled) return;
+        settled = true;
+        window.clearTimeout(timerId);
+        if (googleFormSink) {
+          googleFormSink.removeEventListener('load', done);
+        }
+        resolve();
+      };
+
+      const timerId = window.setTimeout(done, 900);
+      if (googleFormSink) {
+        googleFormSink.addEventListener('load', done, { once: true });
+      }
+      try {
+        HTMLFormElement.prototype.submit.call(formEl);
+      } catch (err) {
+        window.clearTimeout(timerId);
+        if (googleFormSink) {
+          googleFormSink.removeEventListener('load', done);
+        }
+        reject(err);
+      }
+    });
+  }
+
+  async function sendToGoogleForm(formEl, fields) {
+    const payload = new URLSearchParams();
+    payload.append('entry.606430894', fields.name);
+    payload.append('entry.1645353659', fields.email);
+    payload.append('entry.625918304', fields.phone);
+    payload.append('entry.612204001', fields.service);
+    payload.append('entry.1973541810', fields.message);
+
+    if (googleFormSink) {
+      try {
+        await submitViaHiddenIframe(formEl);
+        return;
+      } catch (_) {
+        // Fall through to fetch if sandboxed environment blocks form.submit()
+      }
+    }
+
+    await fetch(GOOGLE_FORM_ACTION_URL, {
+      method: 'POST',
+      mode: 'no-cors',
+      body: payload
+    });
+  }
+
   if (contactForm) {
     [
-      [nameInput, errorName],
-      [emailInput, errorEmail],
-      [messageInput, errorMessage]
-    ].forEach(([inp, err]) => {
+      [nameInput, errorName, 'input'],
+      [emailInput, errorEmail, 'input'],
+      [phoneInput, errorPhone, 'input'],
+      [serviceSelect, errorService, 'change'],
+      [messageInput, errorMessage, 'input']
+    ].forEach(([inp, err, evtName]) => {
       if (inp) {
-        inp.addEventListener('input', () => setFieldError(inp, err, ''));
+        inp.addEventListener(evtName, () => setFieldError(inp, err, ''));
       }
     });
 
-    contactForm.addEventListener('submit', (e) => {
+    contactForm.addEventListener('submit', async (e) => {
       e.preventDefault();
-      if (formStatus) formStatus.hidden = true;
+      if (formStatus) {
+        formStatus.hidden = true;
+        formStatus.classList.remove('is-error');
+      }
 
       const nameVal = nameInput ? nameInput.value.trim() : '';
       const emailVal = emailInput ? emailInput.value.trim() : '';
+      const phoneVal = phoneInput ? phoneInput.value.trim() : '';
+      const serviceVal = serviceSelect ? serviceSelect.value.trim() : '';
       const msgVal = messageInput ? messageInput.value.trim() : '';
-      const serviceVal = serviceSelect && serviceSelect.value ? serviceSelect.value : 'General Enquiry';
 
       let firstInvalid = null;
 
       if (!nameVal) {
-        setFieldError(nameInput, errorName, 'Enter your name.');
+        setFieldError(nameInput, errorName, 'Enter your full name.');
         firstInvalid = firstInvalid || nameInput;
       } else {
         setFieldError(nameInput, errorName, '');
@@ -645,6 +791,20 @@
         setFieldError(emailInput, errorEmail, '');
       }
 
+      if (!phoneVal) {
+        setFieldError(phoneInput, errorPhone, 'Enter your phone number.');
+        firstInvalid = firstInvalid || phoneInput;
+      } else {
+        setFieldError(phoneInput, errorPhone, '');
+      }
+
+      if (!serviceVal) {
+        setFieldError(serviceSelect, errorService, 'Select a project type.');
+        firstInvalid = firstInvalid || serviceSelect;
+      } else {
+        setFieldError(serviceSelect, errorService, '');
+      }
+
       if (!msgVal) {
         setFieldError(messageInput, errorMessage, 'Add a short project brief or dates.');
         firstInvalid = firstInvalid || messageInput;
@@ -653,19 +813,70 @@
       }
 
       if (firstInvalid) {
-        firstInvalid.focus();
+        firstInvalid.scrollIntoView({
+          behavior: prefersReducedMotion() ? 'auto' : 'smooth',
+          block: 'center'
+        });
+        firstInvalid.focus({ preventScroll: true });
         return;
       }
 
-      if (formStatus) {
-        formStatus.textContent = `Thanks, ${nameVal}. Your ${serviceVal.toLowerCase()} enquiry is logged—Shekkeer will reply at ${emailVal} within 24 hours.`;
-        formStatus.hidden = false;
+      if (navigator.onLine === false) {
+        if (formStatus) {
+          formStatus.textContent =
+            'You appear to be offline. Please check your internet connection and try again.';
+          formStatus.classList.add('is-error');
+          formStatus.hidden = false;
+        }
+        return;
       }
 
-      contactForm.reset();
-      lastAutoMessage = '';
-      if (prefillBanner) prefillBanner.hidden = true;
-      if (contactPanel) contactPanel.classList.remove('is-prefilled');
+      if (nameInput) nameInput.value = nameVal;
+      if (emailInput) emailInput.value = emailVal;
+      if (phoneInput) phoneInput.value = phoneVal;
+      if (serviceSelect) serviceSelect.value = serviceVal;
+      if (messageInput) messageInput.value = msgVal;
+
+      if (submitBtn) submitBtn.disabled = true;
+      if (submitLabel) submitLabel.textContent = 'Sending...';
+
+      let submittedOk = false;
+
+      try {
+        await sendToGoogleForm(contactForm, {
+          name: nameVal,
+          email: emailVal,
+          phone: phoneVal,
+          service: serviceVal,
+          message: msgVal
+        });
+
+        submittedOk = true;
+
+        if (formStatus) {
+          formStatus.textContent = `Thanks, ${nameVal}. Your ${serviceVal.toLowerCase()} enquiry has been sent—Shekkeer will reply at ${emailVal} within 24 hours.`;
+          formStatus.hidden = false;
+        }
+
+        contactForm.reset();
+        lastAutoMessage = '';
+        if (prefillBanner) prefillBanner.hidden = true;
+        if (contactPanel) contactPanel.classList.remove('is-prefilled');
+      } catch (err) {
+        if (formStatus) {
+          formStatus.textContent =
+            'Could not send your enquiry right now. Please check your connection and try again.';
+          formStatus.classList.add('is-error');
+          formStatus.hidden = false;
+        }
+      } finally {
+        if (submitBtn) submitBtn.disabled = false;
+        if (submitLabel) submitLabel.textContent = 'Send Enquiry';
+      }
+
+      if (submittedOk) {
+        openConfirmModal(nameVal, serviceVal, emailVal);
+      }
     });
   }
 })();

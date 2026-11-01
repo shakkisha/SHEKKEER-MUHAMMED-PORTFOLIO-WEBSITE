@@ -25,7 +25,7 @@
     rel="stylesheet"
   />
 
-  <link rel="stylesheet" href="styles.css" />
+  <link rel="stylesheet" href="styles.css?v=4" />
 </head>
 <body>
   <a class="skip-link" href="#main-content">Skip to main content</a>
@@ -888,17 +888,32 @@
             <button type="button" class="prefill-clear" id="prefill-clear">Clear</button>
           </div>
 
-          <form id="contact-form" novalidate>
+          <iframe
+            name="google-form-sink"
+            id="google-form-sink"
+            class="sr-only"
+            tabindex="-1"
+            aria-hidden="true"
+            title="Google Form submission target"
+          ></iframe>
+
+          <form
+            id="contact-form"
+            action="https://docs.google.com/forms/u/0/d/e/1FAIpQLScBjBTYOVpy45D_x0O-S8P6qaLRETJlVRzxGnJXM56rMxd0dA/formResponse"
+            method="POST"
+            target="google-form-sink"
+            novalidate
+          >
             <div class="form-grid">
               <div class="form-field">
                 <label class="form-label" for="contact-name">
-                  Name <span class="req" aria-hidden="true">*</span>
+                  Full Name <span class="req" aria-hidden="true">*</span>
                 </label>
                 <input
                   class="form-control"
                   type="text"
                   id="contact-name"
-                  name="name"
+                  name="entry.606430894"
                   autocomplete="name"
                   placeholder="Your name or agency"
                   required
@@ -908,13 +923,13 @@
 
               <div class="form-field">
                 <label class="form-label" for="contact-email">
-                  Email <span class="req" aria-hidden="true">*</span>
+                  Email Address <span class="req" aria-hidden="true">*</span>
                 </label>
                 <input
                   class="form-control"
                   type="email"
                   id="contact-email"
-                  name="email"
+                  name="entry.1645353659"
                   autocomplete="email"
                   placeholder="you@company.com"
                   required
@@ -922,15 +937,39 @@
                 <span class="field-error" id="error-email" aria-live="polite"></span>
               </div>
 
-              <div class="form-field form-field-full">
-                <label class="form-label" for="contact-service">Service</label>
-                <select class="form-control" id="contact-service" name="service">
-                  <option value="">General Enquiry</option>
-                  <option value="Photography">Photography</option>
-                  <option value="Videography">Videography</option>
-                  <option value="Social Media Content">Social Media Content</option>
-                  <option value="Real Estate Visuals">Real Estate Visuals</option>
+              <div class="form-field">
+                <label class="form-label" for="contact-phone">
+                  Phone Number <span class="req" aria-hidden="true">*</span>
+                </label>
+                <input
+                  class="form-control"
+                  type="tel"
+                  id="contact-phone"
+                  name="entry.625918304"
+                  autocomplete="tel"
+                  placeholder="+971 50 000 0000"
+                  required
+                />
+                <span class="field-error" id="error-phone" aria-live="polite"></span>
+              </div>
+
+              <div class="form-field">
+                <label class="form-label" for="contact-service">
+                  Project Type <span class="req" aria-hidden="true">*</span>
+                </label>
+                <select
+                  class="form-control"
+                  id="contact-service"
+                  name="entry.612204001"
+                  required
+                >
+                  <option value="">Choose project type</option>
+                  <option value="Commercial Photography">Commercial Photography</option>
+                  <option value="Automotive Cinematography">Automotive Cinematography</option>
+                  <option value="Digital &amp; AI Content Creation">Digital &amp; AI Content Creation</option>
+                  <option value="Other Collaboration">Other Collaboration</option>
                 </select>
+                <span class="field-error" id="error-service" aria-live="polite"></span>
               </div>
 
               <div class="form-field form-field-full">
@@ -940,7 +979,7 @@
                 <textarea
                   class="form-control"
                   id="contact-message"
-                  name="message"
+                  name="entry.1973541810"
                   placeholder="Tell me what you're shooting, location in Dubai/UAE, and target dates."
                   required
                 ></textarea>
@@ -949,8 +988,8 @@
             </div>
 
             <div class="form-actions">
-              <button type="submit" class="btn btn-primary">
-                <span>Send Enquiry</span>
+              <button type="submit" class="btn btn-primary" id="contact-submit">
+                <span id="contact-submit-label">Send Enquiry</span>
                 <svg class="btn-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true">
                   <path d="M5 12h14M13 6l6 6-6 6" />
                 </svg>
@@ -1010,6 +1049,59 @@
     </div>
   </div>
 
-  <script src="script.js" defer></script>
+  <!-- CONTACT CONFIRMATION POP-UP DIALOG -->
+  <div
+    class="confirm-modal"
+    id="confirm-modal"
+    role="dialog"
+    aria-modal="true"
+    aria-labelledby="confirm-modal-title"
+    aria-describedby="confirm-modal-desc"
+    hidden
+  >
+    <div class="confirm-modal-card" role="document">
+      <div class="confirm-modal-top">
+        <span class="eyebrow confirm-modal-eyebrow">Submission Confirmed</span>
+        <button
+          type="button"
+          class="lightbox-close"
+          id="confirm-modal-close"
+          aria-label="Close confirmation pop-up"
+        >
+          Close [Esc]
+        </button>
+      </div>
+
+      <div class="confirm-modal-icon" aria-hidden="true">
+        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+          <polyline points="20 6 9 17 4 12" />
+        </svg>
+      </div>
+
+      <h2 class="confirm-modal-title" id="confirm-modal-title">Thank You!</h2>
+      <p class="confirm-modal-desc" id="confirm-modal-desc">
+        Your enquiry has been submitted successfully. Shekkeer will review your project details and reply within 24 hours.
+      </p>
+
+      <div class="confirm-modal-meta">
+        <div class="confirm-meta-item">
+          <span class="confirm-meta-label">Project Type</span>
+          <span class="confirm-meta-val" id="confirm-meta-service">Commercial Photography</span>
+        </div>
+        <div class="confirm-meta-item">
+          <span class="confirm-meta-label">Reply To</span>
+          <span class="confirm-meta-val" id="confirm-meta-email">you@company.com</span>
+        </div>
+      </div>
+
+      <div class="confirm-modal-actions">
+        <button type="button" class="btn btn-primary confirm-done-btn" id="confirm-modal-done">
+          <span>Back to Portfolio</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <script src="script.js?v=4" defer></script>
 </body>
 </html>
