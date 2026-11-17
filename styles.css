@@ -1019,6 +1019,10 @@ ol {
   border-color: #ffffff;
 }
 
+button#reel-poster-btn > span.reel-play-box > svg > polygon {
+  background-color: var(--accent-contrast);
+}
+
 .reel-play-label {
   max-width: 100%;
   font-size: 0.8125rem;
