@@ -1002,8 +1002,9 @@ ol {
   flex: 0 0 auto;
   width: 84px;
   height: 84px;
-  background-color: var(--accent);
+  background-color: #ff0000;
   color: #ffffff;
+  font-family: system-ui;
   border: 2px solid var(--accent);
   display: flex;
   align-items: center;
@@ -1016,6 +1017,10 @@ ol {
   background-color: #ffffff;
   color: #000000;
   border-color: #ffffff;
+}
+
+button#reel-poster-btn > span.reel-play-box > svg > polygon {
+  background-color: var(--accent-contrast);
 }
 
 .reel-play-label {
@@ -1088,6 +1093,10 @@ ol {
   min-width: 92px;
   text-align: center;
   transition: border-color var(--dur-fast) ease, background-color var(--dur-fast) ease;
+}
+
+#reel-toggle-btn {
+  box-shadow: 0 0 0.9rem rgba(255, 61, 31, 0.28);
 }
 
 .reel-ctrl-btn:hover {
