@@ -245,6 +245,7 @@
      4. INTERACTIVE COMMERCIAL SHOWREEL PLAYER (CANVAS ENGINE)
      ------------------------------------------------------------------------ */
   const reelCanvas = document.getElementById('reel-canvas');
+  const reelBlock = document.getElementById('video-reel');
   const reelPosterBtn = document.getElementById('reel-poster-btn');
   const reelToggleBtn = document.getElementById('reel-toggle-btn');
   const reelProgress = document.getElementById('reel-progress');
@@ -308,6 +309,7 @@
   const CUT_DURATION = 4; // seconds per cut
   const TOTAL_DURATION = reelCuts.length * CUT_DURATION; // 24s
   const loadedReelImages = [];
+  let reelImagesInitialized = false;
   let reelPlaying = false;
   let reelElapsed = 0;
   let lastFrameTs = null;
@@ -436,6 +438,7 @@
   }
 
   function setReelPlaying(play) {
+    if (play) initializeReelImages();
     reelPlaying = play;
     lastFrameTs = null;
     if (rafId) {
@@ -451,7 +454,10 @@
     }
   }
 
-  if (reelCanvas) {
+  function initializeReelImages() {
+    if (!reelCanvas || reelImagesInitialized) return;
+    reelImagesInitialized = true;
+
     reelCuts.forEach((cut, idx) => {
       const img = new Image();
       img.src = cut.src;
@@ -460,8 +466,22 @@
       });
       loadedReelImages.push(img);
     });
+  }
 
+  if (reelCanvas) {
     renderReelFrame();
+
+    if ('IntersectionObserver' in window && reelBlock) {
+      const reelObserver = new IntersectionObserver((entries) => {
+        if (entries.some((entry) => entry.isIntersecting)) {
+          initializeReelImages();
+          reelObserver.disconnect();
+        }
+      }, { rootMargin: '300px 0px' });
+      reelObserver.observe(reelBlock);
+    } else {
+      initializeReelImages();
+    }
 
     if (reelPosterBtn) {
       reelPosterBtn.addEventListener('click', () => setReelPlaying(true));
